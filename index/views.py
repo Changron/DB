@@ -35,10 +35,10 @@ def sql_view(request):
         
         Uans = re.sub(r"\r\n"," ",sql_str)
         Uans = Uans.replace('\n', ' ')
-        #print(Uans)
-        #print("++++++++++++++")
+        
         pattern = re.compile(";", re.IGNORECASE)
         st = pattern.sub(";\n", Uans)
+        database.exec_sql_insert(st)
         sqlList = [s.strip() for s in st.splitlines()]
         #print(sqlList)
 

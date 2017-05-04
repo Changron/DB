@@ -21,7 +21,8 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-import timeit
+import time
+f = open("test.txt", "w")
 __doc__ = \
 """
 pyparsing module - Classes and methods to define and execute parsing grammars
@@ -1038,12 +1039,15 @@ class ParserElement(object):
 
     #~ @profile
     def _parseNoCache( self, instring, loc, doActions=True, callPreParse=True ):
+        
         debugging = ( self.debug ) #and doActions )
 
         if debugging or self.failAction:
             #~ print ("Match",self,"at loc",loc,"(%d,%d)" % ( lineno(loc,instring), col(loc,instring) ))
+            
             if (self.debugActions[0] ):
                 self.debugActions[0]( instring, loc, self )
+            
             if callPreParse and self.callPreparse:
                 preloc = self.preParse( instring, loc )
             else:
@@ -1062,6 +1066,7 @@ class ParserElement(object):
                     self.failAction( instring, tokensStart, self, err )
                 raise
         else:
+            
             if callPreParse and self.callPreparse:
                 preloc = self.preParse( instring, loc )
             else:
@@ -1075,9 +1080,9 @@ class ParserElement(object):
             else:
                 loc,tokens = self.parseImpl( instring, preloc, doActions )
 
-        tokens = self.postParse( instring, loc, tokens )
-
+        tokens = self.postParse( instring, loc, tokens )        
         retTokens = ParseResults( tokens, self.resultsName, asList=self.saveAsList, modal=self.modalResults )
+        
         if self.parseAction and (doActions or self.callDuringTry):
             if debugging:
                 try:
@@ -1106,7 +1111,7 @@ class ParserElement(object):
             #~ print ("Matched",self,"->",retTokens.asList())
             if (self.debugActions[1] ):
                 self.debugActions[1]( instring, tokensStart, loc, self, retTokens )
-
+        
         return loc, retTokens
 
     def tryParse( self, instring, loc ):
@@ -1126,6 +1131,7 @@ class ParserElement(object):
     # this method gets repeatedly called during backtracking with the same arguments -
     # we can cache these arguments and save ourselves the trouble of re-parsing the contained expression
     def _parseCache( self, instring, loc, doActions=True, callPreParse=True ):
+        
         lookup = (self,instring,loc,callPreParse,doActions)
         if lookup in ParserElement._exprArgCache:
             value = ParserElement._exprArgCache[ lookup ]
@@ -1203,8 +1209,10 @@ class ParserElement(object):
         if not self.keepTabs:
             instring = instring.expandtabs()
         try:
-            loc, tokens = self._parse( instring, 0 )
+           
+            loc, tokens = self._parse( instring, 0 )            
             if parseAll:
+                #print("parse ALl")
                 loc = self.preParse( instring, loc )
                 se = Empty() + StringEnd()
                 se._parse( instring, loc )
@@ -1214,7 +1222,8 @@ class ParserElement(object):
             else:
                 # catch and re-raise exception from here, clears out pyparsing internal stack trace
                 raise exc
-        else:
+            
+        else:            
             return tokens
 
     def scanString( self, instring, maxMatches=_MAX_INT, overlap=False ):
@@ -1640,7 +1649,7 @@ class ParserElement(object):
         except ParseBaseException:
             return False
                 
-    def runTests(self, tests, parseAll=False, comment='#', printResults=True):
+    def runTests(self, tests, parseAll=False, comment='#', printResults=False):
         """Execute the parse expression on a series of test strings, showing each
            test, the parsed results or where the parse failed. Quick and easy way to
            run a parse expression against a list of sample strings.
@@ -1657,6 +1666,7 @@ class ParserElement(object):
         """
         if isinstance(tests, basestring):
             tests = list(map(str.strip, tests.splitlines()))
+            
         if isinstance(comment, basestring):
             comment = Literal(comment)
         out = []
@@ -1664,23 +1674,31 @@ class ParserElement(object):
         comments = []
         success = True
         allValue = []
-        #f = open("w","output.txt" )
        
+        #start = time.time()
+	    #end = time.time()
+	    #f.write(str(end-start)+"\n")
+        
+        #t = tests[0]
         for t in tests:
             #start = timeit.timeit()
+            
             if comment is not None and comment.matches(t, False) or comments and not t:
                 comments.append(t)
-                continue
-            if not t:
-                continue
-        
+                #continue
+            #if not t:
+                #continue  
             
-            comments = []
             ans = ""
 
             try:
-                ans = (self.parseString(t, parseAll=parseAll))
-                out.append(ans.dump)
+                f.write("-----------------\n")
+                f.write(t+"\n")
+                start = time.time()
+                ans = (self.parseString(t))
+                end = time.time()
+                f.write("self.parseString---"+str(end-start)+"\n")
+                out.append(ans)
                 #print(ans)
             except ParseBaseException as pe:
                 fatal = "(FATAL)" if isinstance(pe, ParseFatalException) else ""
@@ -1715,7 +1733,7 @@ class ParserElement(object):
         
         if not printResults:
             return success, allResults
-
+        
         
 class Token(ParserElement):
     """Abstract C{ParserElement} subclass, for defining atomic matching patterns."""

@@ -7,17 +7,19 @@
 
 from miniDB import *
 import shlex
-import timeit
+import time
 import sys
 import re
 import unicodedata
 from ppUpdate import *
+
 f = open("output.txt","w")
-def input_file(DB,file):
-	with open(file, 'r') as content_file:
-		content = content_file.read()
-	
-	return DB,content
+ParserElement.enablePackrat()
+
+
+
+def input_insert(DB, txt):
+	def_insert(DB,txt)
 def input_text(DB,sqlText):
 	#Eliminate all newline
 	#Text = unicodedata.normalize('NFKD', title).encode('ascii','ignore')
@@ -60,6 +62,7 @@ def input_text(DB,sqlText):
 
 
 def def_create(DB,text):
+	
 	createStmt = Forward()
 	CREATE = Keyword("create", caseless = True)
 	TABLE = Keyword("table",caseless = True)
@@ -111,6 +114,7 @@ def def_create(DB,text):
 		return success, tokens
 
 def def_insert(DB,text):
+	#ParserElement.enablePackrat()
 	insertStmt = Forward()
 	INSERT = Keyword("insert", caseless = True)
 	INTO = Keyword("into",caseless = True)
@@ -142,10 +146,10 @@ def def_insert(DB,text):
 	
 	
 
-	start = timeit.timeit()
+	start = time.time()
 	success, tokens = simpleSQL.runTests(text)
-	end = timeit.timeit()
-	f.write(str(end-start))
+	end = time.time()
+	f.write(str(end-start)+"\n")
 	#print(end-start)
 	if(success):
 		return process_input_insert(DB,tokens)

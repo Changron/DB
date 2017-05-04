@@ -19,6 +19,8 @@ class Database:
         """
         #Call string parsing
         return input_text(self, sql)
+    def exec_sql_insert(self, txt):
+        input_insert(self, txt)
       
     def can_create(self, name, col_name, col_datatypes, col_constraints):
         """The fucntion to check whether the type or constraint is valid for table creation
