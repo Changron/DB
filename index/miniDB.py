@@ -350,34 +350,115 @@ class Database:
             None: None. For same return format.
             String: Error message.
         """
-        # key of table
-        for fst_e in tables_obj[0].entities:
-            if len(tables) == 2:
+        # Hashing search
+        Hash1 = False
+        Hash2 = False
+        flag = False
+        # Check weather the select col is primary key
+        
+        try: 
+            res1 = tables_obj[preds[0].rule1[0]].get_column(preds[0].rule1[1]).key
+            if res1 :
+                # key is primary
+                keyVal = preds[0].rule1[2]
+            fst_e = tables_obj.hashTable.get(self, keyVal)
+            Hash1 = True
+        except:
+            print("1 predicates no primariy key")
+        if len(tables) == 1 and Hash1:
+            check, err_msg = self.predicate_check(preds, operator, fst_e, None)
+            if check:
+                # take requested column and append
+                sub_entity = [None] * len(column_infos)
+                for idx, (which_table, cid, aggr) in enumerate(column_infos):
+                    sub_entity[idx] = fst_e.values[cid]
+                result.insert_without_check(sub_entity)
+             return True, None, None
+
+        if len(tables) == 2:
+            try: 
+                res2 = tables_obj[preds[0].rule1[0]].get_column(preds[0].rule1[1]).key
+                if res2 :
+                    # key is primary
+                    keyVal = preds[0].rule1[2]
+                snd_e = tables_obj.hashTable.get(self, keyVal)
+                Hash1 = True
+            except:
+                print("1 predicates no primariy key")
+        
+        if Hash1 and Hash2:
+            check, err_msg = self.predicate_check(preds, operator, fst_e, snd_e)
+            if check: 
+                # take requested column and append
+                sub_entity = [None] * len(column_infos)
+                for idx, (which_table, cid, aggr) in enumerate(column_infos):
+                    if which_table == 0:
+                        sub_entity[idx] = fst_e.values[cid]
+                    else:
+                        sub_entity[idx] = snd_e.values[cid]
+                    print(sub_entity[idx])
+                result.insert_without_check(sub_entity)
+            return True, None, None  
+
+            if Hash1 and not Hash2:
                 for snd_e in tables_obj[1].entities:
                     check, err_msg = self.predicate_check(preds, operator, fst_e, snd_e)
-                    if err_msg:
-                        return False, None, err_msg
                     if check: 
                         # take requested column and append
                         sub_entity = [None] * len(column_infos)
                         for idx, (which_table, cid, aggr) in enumerate(column_infos):
-                            
                             if which_table == 0:
                                 sub_entity[idx] = fst_e.values[cid]
                             else:
                                 sub_entity[idx] = snd_e.values[cid]
+                            print(sub_entity[idx])
                         result.insert_without_check(sub_entity)
+                return True, None, None
 
-            else:
-                check, err_msg = self.predicate_check(preds, operator, fst_e, None)
-                if err_msg:
-                        return False, None, err_msg
-                if check:
-                    # take requested column and append
-                    sub_entity = [None] * len(column_infos)
-                    for idx, (which_table, cid, aggr) in enumerate(column_infos):
-                        sub_entity[idx] = fst_e.values[cid]
-                    result.insert_without_check(sub_entity)
+            elif not Hash1 and Hash2:
+                for fst_e in tables_obj[1].entities:
+                    check, err_msg = self.predicate_check(preds, operator, fst_e, snd_e)
+                    if check: 
+                        # take requested column and append
+                        sub_entity = [None] * len(column_infos)
+                        for idx, (which_table, cid, aggr) in enumerate(column_infos):
+                            if which_table == 0:
+                                sub_entity[idx] = fst_e.values[cid]
+                            else:
+                                sub_entity[idx] = snd_e.values[cid]
+                            print(sub_entity[idx])
+                        result.insert_without_check(sub_entity)
+                return True, None, None
+        
+        # key of table        
+        if (not Hash1) and (not Hash2):
+            for fst_e in tables_obj[0].entities:
+                if len(tables) == 2:
+                    for snd_e in tables_obj[1].entities:
+                        check, err_msg = self.predicate_check(preds, operator, fst_e, snd_e)
+                        if err_msg:
+                            return False, None, err_msg
+                        if check: 
+                            # take requested column and append
+                            sub_entity = [None] * len(column_infos)
+                            for idx, (which_table, cid, aggr) in enumerate(column_infos):
+                                if which_table == 0:
+                                    sub_entity[idx] = fst_e.values[cid]
+                                else:
+                                    sub_entity[idx] = snd_e.values[cid]
+                                print(sub_entity[idx])
+                            result.insert_without_check(sub_entity)
+
+                else:
+                    check, err_msg = self.predicate_check(preds, operator, fst_e, None)
+                    if err_msg:
+                            return False, None, err_msg
+                    if check:
+                        # take requested column and append
+                        sub_entity = [None] * len(column_infos)
+                        for idx, (which_table, cid, aggr) in enumerate(column_infos):
+                            sub_entity[idx] = fst_e.values[cid]
+                        result.insert_without_check(sub_entity)
 
         return True, None, None
 
@@ -554,6 +635,7 @@ class Table:
         self.entities = []
         # dictionary for fast look up from col_name to its order in the table
         self.col_name2id = {}
+        # hashtable initialize
         self.hashTable = EH()
         for i, c in enumerate(columns):
             self.col_name2id[c.name] = i

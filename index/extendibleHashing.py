@@ -34,7 +34,7 @@ class EH(object):
             self.gd += 1
         
         if p.full() and p.d < self.gd:
-            p.put(k,v);
+            p.put(k,v)
             p1 = Page()
             p2 = Page()
             for k2,v2 in p.m.items():
